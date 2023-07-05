@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Save Web Form Data to Spreadsheets - Contact Form</title>
+<script
+  src="https://code.jquery.com/jquery-3.4.1.js"
+  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+  crossorigin="anonymous"></script>
+<p>Latitude: <span id="latitudeValue"></span></p>
+<p>Longitude: <span id="longitudeValue"></span></p>
+<script>
+geofence1 = "";
+var xcode = 7777;
+function SubForm (){
+    const formData = $("#myForm").serializeArray();
+	formData.push({ name: "Geofence", value: geofence1 });
+	console.log(formData);
+
+    $.ajax({
+        url:'https://api.apispreadsheets.com/data/h1YBAKxBJ5lgLTXl/',
+        type:'post',
+        data:formData,
+        success: function(){
+          alert("Form Data Submitted "+xcode)
+        },
+        error: function(){
+          alert("There was an error!")
+        }
+    });
+}
+
+function getLocation() {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            successCallback,
+            errorCallback,
+            { enableHighAccuracy: true }
+        );
+    } else {
+        alert("Geolocation is not supported in this browser.");
+    }
+}
+
+function successCallback(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+	xcode = Math.floor((Math.random() * 10000) + 1);
+	
+	document.getElementById("Xcode").value = xcode;
+    document.getElementById("latitudeValue").textContent = latitude;
+    document.getElementById("longitudeValue").textContent = longitude;
+    document.getElementById("latitudeInput").value = latitude;
+    document.getElementById("longitudeInput").value = longitude;	
+	const geofence = calculateGeofence(latitude, longitude, 5);
+	geofence1 = JSON.stringify(geofence);
+	
+}
+
+function calculateGeofence(latitude, longitude, radius) {
+    const earthRadius = 6371e3; // Earth's radius in meters
+    const deltaLat = (radius / earthRadius) * (180 / Math.PI); // Latitude difference in degrees
+    const deltaLon = (radius / (earthRadius * Math.cos(Math.PI * latitude / 180))) * (180 / Math.PI); // Longitude difference in degrees
+
+    const geofence = {
+        minLat: latitude - deltaLat,
+        maxLat: latitude + deltaLat,
+        minLon: longitude - deltaLon,
+        maxLon: longitude + deltaLon
+    };
+
+    return geofence;
+}
+
+function errorCallback(error) {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            alert("Location permission denied by the user.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            alert("Location information is unavailable.");
+            break;
+        case error.TIMEOUT:
+            alert("The request to get user location timed out.");
+            break;
+        case error.UNKNOWN_ERROR:
+            alert("An unknown error occurred.");
+            break;
+    }
+}
+
+</script>
+</head>
+<body>
+  <button onclick="getLocation()">Allow location access</button>
+  <form id="myForm">
+    <label>Full Name</label>
+    <br/>
+    <input name="full_name" />
+    <br/>
+    <label>Email</label>
+    <br/>
+	<input name="email_id" />
+	<br/>
+	<input id="latitudeInput" type="hidden" name="LAT" />
+    <br/>
+	<input id="longitudeInput" type="hidden" name="LON" />
+    <br/>
+	<input id="Xcode" type="hidden" name="OTP" />
+	<br/>
+    <br/>
+  </form>
+  <button onclick="SubForm()">Submit</button>
+</body>
+</html>
